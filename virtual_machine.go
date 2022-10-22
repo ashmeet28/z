@@ -107,19 +107,19 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		} else if funct3 == 0b100 {
 			// BLT
-			if ((c.r[rs1] & 0x80000000) != 0x80000000) && ((c.r[rs2] & 0x80000000) != 0x80000000) {
+			if ((c.r[rs1] >> 31) == 0x0) && ((c.r[rs2] >> 31) == 0x0) {
 
 				if c.r[rs1] < c.r[rs2] {
 					c.pc = imm + c.pc
 				}
 
-			} else if ((c.r[rs1] & 0x80000000) == 0x80000000) && ((c.r[rs2] & 0x80000000) == 0x80000000) {
+			} else if ((c.r[rs1] >> 31) == 0x1) && ((c.r[rs2] >> 31) == 0x1) {
 
 				if c.r[rs1] > c.r[rs2] {
 					c.pc = imm + c.pc
 				}
 
-			} else if (c.r[rs1] & 0x80000000) == 0x80000000 {
+			} else if (c.r[rs1] >> 31) == 0x1 {
 				c.pc = imm + c.pc
 			}
 
@@ -127,19 +127,19 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			// BGE
 			if c.r[rs1] == c.r[rs2] {
 				c.pc = imm + c.pc
-			} else if ((c.r[rs1] & 0x80000000) != 0x80000000) && ((c.r[rs2] & 0x80000000) != 0x80000000) {
+			} else if ((c.r[rs1] >> 31) == 0x0) && ((c.r[rs2] >> 31) == 0x0) {
 
 				if c.r[rs1] > c.r[rs2] {
 					c.pc = imm + c.pc
 				}
 
-			} else if ((c.r[rs1] & 0x80000000) == 0x80000000) && ((c.r[rs2] & 0x80000000) == 0x80000000) {
+			} else if ((c.r[rs1] >> 31) == 0x1) && ((c.r[rs2] >> 31) == 0x1) {
 
 				if c.r[rs1] < c.r[rs2] {
 					c.pc = imm + c.pc
 				}
 
-			} else if (c.r[rs2] & 0x80000000) == 0x80000000 {
+			} else if (c.r[rs1] >> 31) == 0x1 {
 				c.pc = imm + c.pc
 			}
 
