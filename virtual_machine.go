@@ -20,7 +20,7 @@ func ZVMReset(c ZVMContext) ZVMContext {
 }
 
 func ZVMHandleECall(c ZVMContext) ZVMContext {
-    c.s = 5
+	c.s = 5
 	return c
 }
 
@@ -185,6 +185,8 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		// ECALL
 		c = ZVMHandleECall(c)
 
+	} else {
+		c.s = 5
 	}
 
 	if c.s == 4 {
@@ -193,7 +195,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 	fmt.Println(c.r)
 	fmt.Println(c.pc)
-    fmt.Println(c.s)
+	fmt.Println(c.s)
 	return c
 }
 
