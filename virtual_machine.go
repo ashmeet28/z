@@ -139,7 +139,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 					c.pc = imm + c.pc
 				}
 
-			} else if (c.r[rs1] >> 31) == 0x1 {
+			} else if (c.r[rs2] >> 31) == 0x1 {
 				c.pc = imm + c.pc
 			}
 
