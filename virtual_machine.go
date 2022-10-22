@@ -33,7 +33,6 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	var funct3 uint32
 
 	c.s = 4
-
 	c.r[0] = 0
 
 	inst = uint32(c.m[c.pc]) | uint32(c.m[c.pc+1])<<8 | uint32(c.m[c.pc+2])<<16 | uint32(c.m[c.pc+3])<<24
@@ -159,6 +158,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		} else {
 			c.s = 5
 		}
+
 	} else if opcode == 0b0000011 {
 
 		rd = (inst >> 7) & 0x1f
@@ -186,6 +186,10 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 	}
 
+	if c.s == 5 {
+		c.s = 3
+	}
+
 	fmt.Println(c.r)
 	fmt.Println(c.pc)
 	return c
@@ -200,8 +204,7 @@ func ZVMRun(c ZVMContext) ZVMContext {
 
 func main() {
 	var c ZVMContext
-	c = ZVMReset(c)
-	c = ZVMTick(c)
+	c = ZVMRun(ZVMReset(c))
 	if len(os.Args) != 2 {
 		log.Fatal("Invaild Args")
 	}
@@ -210,5 +213,4 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println(data)
-
 }
