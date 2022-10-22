@@ -186,7 +186,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 	}
 
-	if c.s == 5 {
+	if c.s == 4 {
 		c.s = 3
 	}
 
