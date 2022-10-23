@@ -1,8 +1,6 @@
 package main
 
 import "fmt"
-import "os"
-import "log"
 
 type ZVMContext struct {
 	r  []uint32
@@ -47,12 +45,16 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		c.r[rd] = imm
 
+		c.pc = c.pc + 4
+
 	} else if opcode == 0b0010111 {
 		// AUIPC
 		rd = (inst >> 7) & 0x1f
 		imm = inst & 0xfffff000
 
 		c.r[rd] = imm + c.pc
+
+		c.pc = c.pc + 4
 
 	} else if opcode == 0b1101111 {
 		// JAL
@@ -98,12 +100,16 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			// BEQ
 			if c.r[rs1] == c.r[rs2] {
 				c.pc = imm + c.pc
+			} else {
+				c.pc = c.pc + 4
 			}
 
 		} else if funct3 == 0b001 {
 			// BNE
 			if c.r[rs1] != c.r[rs2] {
 				c.pc = imm + c.pc
+			} else {
+				c.pc = c.pc + 4
 			}
 
 		} else if funct3 == 0b100 {
@@ -112,12 +118,16 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 				if c.r[rs1] < c.r[rs2] {
 					c.pc = imm + c.pc
+				} else {
+					c.pc = c.pc + 4
 				}
 
 			} else if ((c.r[rs1] >> 31) == 0x1) && ((c.r[rs2] >> 31) == 0x1) {
 
 				if c.r[rs1] > c.r[rs2] {
 					c.pc = imm + c.pc
+				} else {
+					c.pc = c.pc + 4
 				}
 
 			} else if (c.r[rs1] >> 31) == 0x1 {
@@ -190,12 +200,9 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	}
 
 	if c.s == 4 {
-		c.s = 3
+		c.s = 2
 	}
 
-	fmt.Println(c.r)
-	fmt.Println(c.pc)
-	fmt.Println(c.s)
 	return c
 }
 
@@ -208,13 +215,23 @@ func ZVMRun(c ZVMContext) ZVMContext {
 
 func main() {
 	var c ZVMContext
-	c = ZVMRun(ZVMReset(c))
-	if len(os.Args) != 2 {
-		log.Fatal("Invaild Args")
+	c = ZVMReset(c)
+
+	data := []uint32{0b1_00001_0110111, 0b1_00010_0010111}
+	var a int
+	a = 0x08000000
+
+	for _, v := range data {
+		c.m[a+0] = uint8((v >> 0) & 0xff)
+		c.m[a+1] = uint8((v >> 8) & 0xff)
+		c.m[a+2] = uint8((v >> 16) & 0xff)
+		c.m[a+3] = uint8((v >> 24) & 0xff)
+		a += 4
 	}
-	data, err := os.ReadFile(os.Args[len(os.Args)-1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(data)
+
+	c = ZVMRun(c)
+
+	fmt.Println(c.r)
+	fmt.Println(c.pc)
+	fmt.Println(c.s)
 }
