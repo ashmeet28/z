@@ -34,7 +34,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	c.s = 4
 	c.r[0] = 0
 
-	inst = uint32(c.m[c.pc]) | uint32(c.m[c.pc+1])<<8 | uint32(c.m[c.pc+2])<<16 | uint32(c.m[c.pc+3])<<24
+	inst = uint32(c.m[c.pc]) | (uint32(c.m[c.pc+1]) << 8) | (uint32(c.m[c.pc+2]) << 16) | (uint32(c.m[c.pc+3]) << 24)
 
 	opcode = inst & 0x7f
 
@@ -132,38 +132,48 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 			} else if (c.r[rs1] >> 31) == 0x1 {
 				c.pc = imm + c.pc
+			} else {
+				c.pc = c.pc + 4
 			}
 
 		} else if funct3 == 0b101 {
 			// BGE
-			if c.r[rs1] == c.r[rs2] {
-				c.pc = imm + c.pc
-			} else if ((c.r[rs1] >> 31) == 0x0) && ((c.r[rs2] >> 31) == 0x0) {
+			if ((c.r[rs1] >> 31) == 0x0) && ((c.r[rs2] >> 31) == 0x0) {
 
-				if c.r[rs1] > c.r[rs2] {
+				if c.r[rs1] >= c.r[rs2] {
 					c.pc = imm + c.pc
+				} else {
+					c.pc = c.pc + 4
 				}
 
 			} else if ((c.r[rs1] >> 31) == 0x1) && ((c.r[rs2] >> 31) == 0x1) {
 
-				if c.r[rs1] < c.r[rs2] {
+				if c.r[rs1] <= c.r[rs2] {
 					c.pc = imm + c.pc
+				} else {
+					c.pc = c.pc + 4
 				}
 
 			} else if (c.r[rs2] >> 31) == 0x1 {
 				c.pc = imm + c.pc
+			} else {
+				c.pc = c.pc + 4
 			}
 
 		} else if funct3 == 0b110 {
 			// BLTU
 			if c.r[rs1] < c.r[rs2] {
 				c.pc = imm + c.pc
+			} else {
+				c.pc = c.pc + 4
 			}
 
 		} else if funct3 == 0b111 {
 			// BGEU
 			if c.r[rs1] >= c.r[rs2] {
 				c.pc = imm + c.pc
+			} else {
+				c.pc = c.pc + 4
 			}
 
 		} else {
@@ -186,9 +196,30 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			if (c.r[rd] & 0x80) == 0x80 {
 				c.r[rd] = c.r[rd] | 0xffffff80
 			}
+			c.pc = c.pc + 4
 
-		} else {
-			c.s = 5
+		} else if funct3 == 0b001 {
+			// LH
+			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8)
+			if (c.r[rd] & 0x8000) == 0x8000 {
+				c.r[rd] = c.r[rd] | 0xffff8000
+			}
+			c.pc = c.pc + 4
+		} else if funct3 == 0b010 {
+			// LW
+			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8) | (uint32(c.m[c.r[rs1]+imm+2]) << 16) | (uint32(c.m[c.r[rs1]+imm+3]) << 24)
+			if (c.r[rd] & 0x8000) == 0x8000 {
+				c.r[rd] = c.r[rd] | 0xffff8000
+			}
+			c.pc = c.pc + 4
+		} else if funct3 == 0b100 {
+			// LBU
+			c.r[rd] = uint32(c.m[c.r[rs1]+imm])
+			c.pc = c.pc + 4
+		} else if funct3 == 0b101 {
+			// LHU
+			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8)
+			c.pc = c.pc + 4
 		}
 
 	} else if opcode == 0b1110011 {
@@ -218,8 +249,8 @@ func main() {
 	c = ZVMReset(c)
 
 	data := []uint32{0b1_00001_0110111, 0b1_00010_0010111}
-	var a int
-	a = 0x08000000
+	var a uint32
+	a = c.pc
 
 	for _, v := range data {
 		c.m[a+0] = uint8((v >> 0) & 0xff)
