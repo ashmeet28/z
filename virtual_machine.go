@@ -30,16 +30,16 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	var rs2 uint32
 	var rd uint32
 	var funct3 uint32
-    
-    var pc uint32
-    var r []uint32
-    var m []uint32
-    var s uint32
 
-    pc = c.pc
-    r = c.r
-    m = c.m
-    s = c.s
+	var pc uint32
+	var r []uint32
+	var m []uint8
+	var s uint32
+
+	pc = c.pc
+	r = c.r
+	m = c.m
+	s = c.s
 
 	s = 4
 	r[0] = 0
@@ -251,11 +251,13 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		if funct3 == 0b000 {
 			// SB
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
+            pc = pc + 4
 
 		} else if funct3 == 0b001 {
 			// SH
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
 			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
+            pc = pc + 4
 
 		} else if funct3 == 0b010 {
 			// SW
@@ -263,6 +265,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
 			m[r[rs1]+imm+2] = uint8((r[rs2] >> 16) & 0xff)
 			m[r[rs1]+imm+3] = uint8((r[rs2] >> 24) & 0xff)
+            pc = pc + 4
 
 		}
 
@@ -278,10 +281,10 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		s = 2
 	}
 
-    c.pc = pc
-    c.r = r
-    c.m = m
-    c.s = s
+	c.pc = pc
+	c.r = r
+	c.m = m
+	c.s = s
 
 	return c
 }
