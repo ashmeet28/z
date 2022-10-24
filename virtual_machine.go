@@ -60,7 +60,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		// JAL
 		imm = ((inst & 0x80000000) >> 11) | (inst & 0xff000) | ((inst >> 9) & 0x800) | ((inst >> 20) & 0x7fe)
 		if (imm & 0x100000) == 0x100000 {
-			imm = imm | 0xfff00000
+			imm = imm | 0xffe00000
 		}
 		rd = (inst >> 7) & 0x1f
 
@@ -90,7 +90,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		imm = ((inst & 0x80000000) >> 19) | ((inst & 0x80) << 4) | ((inst >> 20) & 0x7e0) | ((inst >> 7) & 0x1e)
 		if (imm & 0x1000) == 0x1000 {
-			imm = imm | 0xfffff000
+			imm = imm | 0xffffe000
 		}
 		rs1 = (inst >> 15) & 0x1f
 		rs2 = (inst >> 20) & 0x1f
@@ -187,7 +187,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		funct3 = (inst >> 12) & 0x7
 		imm = inst >> 20
 		if (imm & 0x800) == 0x800 {
-			imm = imm | 0xfffff800
+			imm = imm | 0xfffff000
 		}
 
 		if funct3 == 0b000 {
@@ -202,24 +202,58 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			// LH
 			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8)
 			if (c.r[rd] & 0x8000) == 0x8000 {
-				c.r[rd] = c.r[rd] | 0xffff8000
+				c.r[rd] = c.r[rd] | 0xffff0000
 			}
 			c.pc = c.pc + 4
+
 		} else if funct3 == 0b010 {
 			// LW
 			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8) | (uint32(c.m[c.r[rs1]+imm+2]) << 16) | (uint32(c.m[c.r[rs1]+imm+3]) << 24)
 			if (c.r[rd] & 0x8000) == 0x8000 {
-				c.r[rd] = c.r[rd] | 0xffff8000
+				c.r[rd] = c.r[rd] | 0xffff0000
 			}
 			c.pc = c.pc + 4
+
 		} else if funct3 == 0b100 {
 			// LBU
 			c.r[rd] = uint32(c.m[c.r[rs1]+imm])
 			c.pc = c.pc + 4
+
 		} else if funct3 == 0b101 {
 			// LHU
 			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8)
 			c.pc = c.pc + 4
+
+		} else {
+			c.s = 5
+		}
+
+	} else if opcode == 0b0100011 {
+		rs1 = (inst >> 15) & 0x1f
+		rs2 = (inst >> 20) & 0x1f
+		funct3 = (inst >> 12) & 0x7
+		imm = ((inst >> 7) & 0x1f) | ((inst >> 20) & 0xfe0)
+
+		if (imm & 0x800) == 0x800 {
+			imm = imm | 0xfffff000
+		}
+
+		if funct3 == 0b000 {
+			// SB
+			c.m[c.r[rs1]+imm] = uint8(c.r[rs2] & 0xff)
+
+		} else if funct3 == 0b001 {
+			// SH
+			c.m[c.r[rs1]+imm] = uint8(c.r[rs2] & 0xff)
+			c.m[c.r[rs1]+imm+1] = uint8((c.r[rs2] >> 8) & 0xff)
+
+		} else if funct3 == 0b010 {
+			// SW
+			c.m[c.r[rs1]+imm] = uint8(c.r[rs2] & 0xff)
+			c.m[c.r[rs1]+imm+1] = uint8((c.r[rs2] >> 8) & 0xff)
+			c.m[c.r[rs1]+imm+2] = uint8((c.r[rs2] >> 16) & 0xff)
+			c.m[c.r[rs1]+imm+3] = uint8((c.r[rs2] >> 24) & 0xff)
+
 		}
 
 	} else if opcode == 0b1110011 {
