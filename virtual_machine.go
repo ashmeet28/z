@@ -251,13 +251,13 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		if funct3 == 0b000 {
 			// SB
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
-            pc = pc + 4
+			pc = pc + 4
 
 		} else if funct3 == 0b001 {
 			// SH
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
 			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
-            pc = pc + 4
+			pc = pc + 4
 
 		} else if funct3 == 0b010 {
 			// SW
@@ -265,11 +265,78 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
 			m[r[rs1]+imm+2] = uint8((r[rs2] >> 16) & 0xff)
 			m[r[rs1]+imm+3] = uint8((r[rs2] >> 24) & 0xff)
-            pc = pc + 4
+			pc = pc + 4
 
 		}
 
-	} else if opcode == 0b1110011 {
+	}else if opcode == 0b0010011 {
+        rd = (inst >> 7) & 0x1f
+		funct3 = (inst >> 12) & 0x7
+		rs1 = (inst >> 15) & 0x1f
+		imm = inst >> 20
+
+
+		if (imm & 0x800) == 0x800 {
+			imm = imm | 0xfffff000
+		}
+
+        if funct3 == 0b000 {
+            // ADDI
+            r[rd] = r[rs1] + imm
+            pc = pc + 4
+
+        } else if funct3 == 0b010 {
+            // SLTI
+			if ((r[rs1] >> 31) == 0x0) && ((imm >> 31) == 0x0) {
+
+				if r[rs1] < imm {
+                    r[rd] = 0x1
+				} else {
+                    r[rd] = 0x0
+				}
+
+			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
+
+				if r[rs1] > imm {
+                    r[rd] = 0x1
+				} else {
+                    r[rd] = 0x0
+				}
+
+			} else if (r[rs1] >> 31) == 0x1 {
+                r[rd] = 0x1
+			} else {
+                r[rd] = 0x0
+			}
+			pc = pc + 4
+            
+        } else if funct3 == 0b011 {
+            // SLTIU
+            if r[rs1] < imm {
+                r[rd] = 0x1
+            } else {
+                r[rd] = 0x0
+            }
+            pc = pc + 4
+
+        } else if funct3 == 0b100 {
+            // XORI
+            r[rd] = r[rs1] ^ imm
+            pc = pc + 4
+
+        } else if funct3 == 0b110 {
+            // ORI
+            r[rd] = r[rs1] | imm
+            pc = pc + 4
+
+        } else if funct3 == 0b111 {
+            // ANDI
+            r[rd] = r[rs1] & imm
+            pc = pc + 4
+
+        }
+
+    }else if opcode == 0b1110011 {
 		// ECALL
 		c = ZVMHandleECall(c)
 
