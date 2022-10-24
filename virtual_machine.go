@@ -3,9 +3,9 @@ package main
 import "fmt"
 
 type ZVMContext struct {
+	pc uint32
 	r  []uint32
 	m  []uint8
-	pc uint32
 	s  uint32
 }
 
@@ -30,11 +30,21 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	var rs2 uint32
 	var rd uint32
 	var funct3 uint32
+    
+    var pc uint32
+    var r []uint32
+    var m []uint32
+    var s uint32
 
-	c.s = 4
-	c.r[0] = 0
+    pc = c.pc
+    r = c.r
+    m = c.m
+    s = c.s
 
-	inst = uint32(c.m[c.pc]) | (uint32(c.m[c.pc+1]) << 8) | (uint32(c.m[c.pc+2]) << 16) | (uint32(c.m[c.pc+3]) << 24)
+	s = 4
+	r[0] = 0
+
+	inst = uint32(m[pc]) | (uint32(m[pc+1]) << 8) | (uint32(m[pc+2]) << 16) | (uint32(m[pc+3]) << 24)
 
 	opcode = inst & 0x7f
 
@@ -43,18 +53,18 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		rd = (inst >> 7) & 0x1f
 		imm = inst & 0xfffff000
 
-		c.r[rd] = imm
+		r[rd] = imm
 
-		c.pc = c.pc + 4
+		pc = pc + 4
 
 	} else if opcode == 0b0010111 {
 		// AUIPC
 		rd = (inst >> 7) & 0x1f
 		imm = inst & 0xfffff000
 
-		c.r[rd] = imm + c.pc
+		r[rd] = imm + pc
 
-		c.pc = c.pc + 4
+		pc = pc + 4
 
 	} else if opcode == 0b1101111 {
 		// JAL
@@ -64,8 +74,8 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		}
 		rd = (inst >> 7) & 0x1f
 
-		c.r[rd] = c.pc + 4
-		c.pc = c.pc + imm
+		r[rd] = pc + 4
+		pc = pc + imm
 
 	} else if opcode == 0b1100111 {
 
@@ -79,11 +89,11 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		if funct3 == 0b000 {
 			// JALR
-			c.r[rd] = c.pc + 4
-			c.pc = (imm + c.r[rs1]) & 0xfffffffe
+			r[rd] = pc + 4
+			pc = (imm + r[rs1]) & 0xfffffffe
 
 		} else {
-			c.s = 5
+			s = 5
 		}
 
 	} else if opcode == 0b1100011 {
@@ -98,86 +108,86 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		if funct3 == 0b000 {
 			// BEQ
-			if c.r[rs1] == c.r[rs2] {
-				c.pc = imm + c.pc
+			if r[rs1] == r[rs2] {
+				pc = imm + pc
 			} else {
-				c.pc = c.pc + 4
+				pc = pc + 4
 			}
 
 		} else if funct3 == 0b001 {
 			// BNE
-			if c.r[rs1] != c.r[rs2] {
-				c.pc = imm + c.pc
+			if r[rs1] != r[rs2] {
+				pc = imm + pc
 			} else {
-				c.pc = c.pc + 4
+				pc = pc + 4
 			}
 
 		} else if funct3 == 0b100 {
 			// BLT
-			if ((c.r[rs1] >> 31) == 0x0) && ((c.r[rs2] >> 31) == 0x0) {
+			if ((r[rs1] >> 31) == 0x0) && ((r[rs2] >> 31) == 0x0) {
 
-				if c.r[rs1] < c.r[rs2] {
-					c.pc = imm + c.pc
+				if r[rs1] < r[rs2] {
+					pc = imm + pc
 				} else {
-					c.pc = c.pc + 4
+					pc = pc + 4
 				}
 
-			} else if ((c.r[rs1] >> 31) == 0x1) && ((c.r[rs2] >> 31) == 0x1) {
+			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
 
-				if c.r[rs1] > c.r[rs2] {
-					c.pc = imm + c.pc
+				if r[rs1] > r[rs2] {
+					pc = imm + pc
 				} else {
-					c.pc = c.pc + 4
+					pc = pc + 4
 				}
 
-			} else if (c.r[rs1] >> 31) == 0x1 {
-				c.pc = imm + c.pc
+			} else if (r[rs1] >> 31) == 0x1 {
+				pc = imm + pc
 			} else {
-				c.pc = c.pc + 4
+				pc = pc + 4
 			}
 
 		} else if funct3 == 0b101 {
 			// BGE
-			if ((c.r[rs1] >> 31) == 0x0) && ((c.r[rs2] >> 31) == 0x0) {
+			if ((r[rs1] >> 31) == 0x0) && ((r[rs2] >> 31) == 0x0) {
 
-				if c.r[rs1] >= c.r[rs2] {
-					c.pc = imm + c.pc
+				if r[rs1] >= r[rs2] {
+					pc = imm + pc
 				} else {
-					c.pc = c.pc + 4
+					pc = pc + 4
 				}
 
-			} else if ((c.r[rs1] >> 31) == 0x1) && ((c.r[rs2] >> 31) == 0x1) {
+			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
 
-				if c.r[rs1] <= c.r[rs2] {
-					c.pc = imm + c.pc
+				if r[rs1] <= r[rs2] {
+					pc = imm + pc
 				} else {
-					c.pc = c.pc + 4
+					pc = pc + 4
 				}
 
-			} else if (c.r[rs2] >> 31) == 0x1 {
-				c.pc = imm + c.pc
+			} else if (r[rs2] >> 31) == 0x1 {
+				pc = imm + pc
 			} else {
-				c.pc = c.pc + 4
+				pc = pc + 4
 			}
 
 		} else if funct3 == 0b110 {
 			// BLTU
-			if c.r[rs1] < c.r[rs2] {
-				c.pc = imm + c.pc
+			if r[rs1] < r[rs2] {
+				pc = imm + pc
 			} else {
-				c.pc = c.pc + 4
+				pc = pc + 4
 			}
 
 		} else if funct3 == 0b111 {
 			// BGEU
-			if c.r[rs1] >= c.r[rs2] {
-				c.pc = imm + c.pc
+			if r[rs1] >= r[rs2] {
+				pc = imm + pc
 			} else {
-				c.pc = c.pc + 4
+				pc = pc + 4
 			}
 
 		} else {
-			c.s = 5
+			s = 5
 		}
 
 	} else if opcode == 0b0000011 {
@@ -192,40 +202,40 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		if funct3 == 0b000 {
 			// LB
-			c.r[rd] = uint32(c.m[c.r[rs1]+imm])
-			if (c.r[rd] & 0x80) == 0x80 {
-				c.r[rd] = c.r[rd] | 0xffffff80
+			r[rd] = uint32(m[r[rs1]+imm])
+			if (r[rd] & 0x80) == 0x80 {
+				r[rd] = r[rd] | 0xffffff80
 			}
-			c.pc = c.pc + 4
+			pc = pc + 4
 
 		} else if funct3 == 0b001 {
 			// LH
-			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8)
-			if (c.r[rd] & 0x8000) == 0x8000 {
-				c.r[rd] = c.r[rd] | 0xffff0000
+			r[rd] = uint32(m[r[rs1]+imm]) | (uint32(m[r[rs1]+imm+1]) << 8)
+			if (r[rd] & 0x8000) == 0x8000 {
+				r[rd] = r[rd] | 0xffff0000
 			}
-			c.pc = c.pc + 4
+			pc = pc + 4
 
 		} else if funct3 == 0b010 {
 			// LW
-			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8) | (uint32(c.m[c.r[rs1]+imm+2]) << 16) | (uint32(c.m[c.r[rs1]+imm+3]) << 24)
-			if (c.r[rd] & 0x8000) == 0x8000 {
-				c.r[rd] = c.r[rd] | 0xffff0000
+			r[rd] = uint32(m[r[rs1]+imm]) | (uint32(m[r[rs1]+imm+1]) << 8) | (uint32(m[r[rs1]+imm+2]) << 16) | (uint32(m[r[rs1]+imm+3]) << 24)
+			if (r[rd] & 0x8000) == 0x8000 {
+				r[rd] = r[rd] | 0xffff0000
 			}
-			c.pc = c.pc + 4
+			pc = pc + 4
 
 		} else if funct3 == 0b100 {
 			// LBU
-			c.r[rd] = uint32(c.m[c.r[rs1]+imm])
-			c.pc = c.pc + 4
+			r[rd] = uint32(m[r[rs1]+imm])
+			pc = pc + 4
 
 		} else if funct3 == 0b101 {
 			// LHU
-			c.r[rd] = uint32(c.m[c.r[rs1]+imm]) | (uint32(c.m[c.r[rs1]+imm+1]) << 8)
-			c.pc = c.pc + 4
+			r[rd] = uint32(m[r[rs1]+imm]) | (uint32(m[r[rs1]+imm+1]) << 8)
+			pc = pc + 4
 
 		} else {
-			c.s = 5
+			s = 5
 		}
 
 	} else if opcode == 0b0100011 {
@@ -240,19 +250,19 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		if funct3 == 0b000 {
 			// SB
-			c.m[c.r[rs1]+imm] = uint8(c.r[rs2] & 0xff)
+			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
 
 		} else if funct3 == 0b001 {
 			// SH
-			c.m[c.r[rs1]+imm] = uint8(c.r[rs2] & 0xff)
-			c.m[c.r[rs1]+imm+1] = uint8((c.r[rs2] >> 8) & 0xff)
+			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
+			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
 
 		} else if funct3 == 0b010 {
 			// SW
-			c.m[c.r[rs1]+imm] = uint8(c.r[rs2] & 0xff)
-			c.m[c.r[rs1]+imm+1] = uint8((c.r[rs2] >> 8) & 0xff)
-			c.m[c.r[rs1]+imm+2] = uint8((c.r[rs2] >> 16) & 0xff)
-			c.m[c.r[rs1]+imm+3] = uint8((c.r[rs2] >> 24) & 0xff)
+			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
+			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
+			m[r[rs1]+imm+2] = uint8((r[rs2] >> 16) & 0xff)
+			m[r[rs1]+imm+3] = uint8((r[rs2] >> 24) & 0xff)
 
 		}
 
@@ -261,12 +271,17 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		c = ZVMHandleECall(c)
 
 	} else {
-		c.s = 5
+		s = 5
 	}
 
-	if c.s == 4 {
-		c.s = 2
+	if s == 4 {
+		s = 2
 	}
+
+    c.pc = pc
+    c.r = r
+    c.m = m
+    c.s = s
 
 	return c
 }
