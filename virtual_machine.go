@@ -30,6 +30,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	var rs2 uint32
 	var rd uint32
 	var funct3 uint32
+	var shamt uint32
 
 	var pc uint32
 	var r []uint32
@@ -269,74 +270,96 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 		}
 
-	}else if opcode == 0b0010011 {
-        rd = (inst >> 7) & 0x1f
+	} else if opcode == 0b0010011 {
+		rd = (inst >> 7) & 0x1f
 		funct3 = (inst >> 12) & 0x7
 		rs1 = (inst >> 15) & 0x1f
 		imm = inst >> 20
-
 
 		if (imm & 0x800) == 0x800 {
 			imm = imm | 0xfffff000
 		}
 
-        if funct3 == 0b000 {
-            // ADDI
-            r[rd] = r[rs1] + imm
-            pc = pc + 4
+		if funct3 == 0b000 {
+			// ADDI
+			r[rd] = r[rs1] + imm
+			pc = pc + 4
 
-        } else if funct3 == 0b010 {
-            // SLTI
+		} else if funct3 == 0b010 {
+			// SLTI
 			if ((r[rs1] >> 31) == 0x0) && ((imm >> 31) == 0x0) {
 
 				if r[rs1] < imm {
-                    r[rd] = 0x1
+					r[rd] = 0x1
 				} else {
-                    r[rd] = 0x0
+					r[rd] = 0x0
 				}
 
 			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
 
 				if r[rs1] > imm {
-                    r[rd] = 0x1
+					r[rd] = 0x1
 				} else {
-                    r[rd] = 0x0
+					r[rd] = 0x0
 				}
 
 			} else if (r[rs1] >> 31) == 0x1 {
-                r[rd] = 0x1
+				r[rd] = 0x1
 			} else {
-                r[rd] = 0x0
+				r[rd] = 0x0
 			}
 			pc = pc + 4
-            
-        } else if funct3 == 0b011 {
-            // SLTIU
-            if r[rs1] < imm {
-                r[rd] = 0x1
-            } else {
-                r[rd] = 0x0
-            }
-            pc = pc + 4
 
-        } else if funct3 == 0b100 {
-            // XORI
-            r[rd] = r[rs1] ^ imm
-            pc = pc + 4
+		} else if funct3 == 0b011 {
+			// SLTIU
+			if r[rs1] < imm {
+				r[rd] = 0x1
+			} else {
+				r[rd] = 0x0
+			}
+			pc = pc + 4
 
-        } else if funct3 == 0b110 {
-            // ORI
-            r[rd] = r[rs1] | imm
-            pc = pc + 4
+		} else if funct3 == 0b100 {
+			// XORI
+			r[rd] = r[rs1] ^ imm
+			pc = pc + 4
 
-        } else if funct3 == 0b111 {
-            // ANDI
-            r[rd] = r[rs1] & imm
-            pc = pc + 4
+		} else if funct3 == 0b110 {
+			// ORI
+			r[rd] = r[rs1] | imm
+			pc = pc + 4
 
-        }
+		} else if funct3 == 0b111 {
+			// ANDI
+			r[rd] = r[rs1] & imm
+			pc = pc + 4
 
-    }else if opcode == 0b1110011 {
+		}
+
+	} else if opcode == 0b0010011 {
+		rd = (inst >> 7) & 0x1f
+		funct3 = (inst >> 12) & 0x7
+		rs1 = (inst >> 15) & 0x1f
+		imm = inst >> 20
+		shamt = inst & 0x1f
+
+		if (funct3 == 0b001) && ((imm & 0xfe0) == 0) {
+			// SLLI
+			r[rd] = r[rs1] << shamt
+			pc = pc + 4
+		} else if (funct3 == 0b101) && ((imm & 0xfe0) == 0) {
+			// SRLI
+			r[rd] = r[rs1] >> shamt
+			pc = pc + 4
+		} else if (funct3 == 0b101) && ((imm & 0xfe0) == 0x400) {
+			// SRAI
+			r[rd] = r[rs1] >> shamt
+			if (r[rs1] & 0x80000000) == 0x80000000 {
+				r[rd] = r[rd] | (0xffffffff << (32 - shamt))
+			}
+			pc = pc + 4
+		}
+	} else if opcode == 0b1110011 {
 		// ECALL
 		c = ZVMHandleECall(c)
 
