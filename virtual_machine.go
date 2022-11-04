@@ -17,11 +17,6 @@ func ZVMReset(c ZVMContext) ZVMContext {
 	return c
 }
 
-func ZVMHandleECall(c ZVMContext) ZVMContext {
-	c.s = 0x5
-	return c
-}
-
 func ZVMTick(c ZVMContext) ZVMContext {
 	var opcode uint32
 	var inst uint32
@@ -31,6 +26,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 	var rd uint32
 	var funct3 uint32
 	var funct7 uint32
+	var funct12 uint32
 	var shamt uint32
 
 	var pc uint32
@@ -459,7 +455,14 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		}
 	} else if opcode == 0b1110011 {
 		// ECALL
-		c = ZVMHandleECall(c)
+		rd = (inst >> 7) & 0x1f
+		funct3 = (inst >> 12) & 0x7
+		rs1 = (inst >> 15) & 0x1f
+		funct12 = inst >> 20
+
+		if (rd == 0x0) && (funct3 == 0x0) && (rs1 == 0x0) && (funct12 == 0x0) {
+			s = 5
+		}
 	}
 
 	c.pc = pc
