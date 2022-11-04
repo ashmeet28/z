@@ -45,9 +45,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 	s = 4
 	r[0] = 0
-
 	inst = uint32(m[pc]) | (uint32(m[pc+1]) << 8) | (uint32(m[pc+2]) << 16) | (uint32(m[pc+3]) << 24)
-
 	opcode = inst & 0x7f
 
 	if opcode == 0b0110111 {
@@ -56,59 +54,55 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		imm = inst & 0xfffff000
 
 		r[rd] = imm
-
 		pc = pc + 4
-		s = 2
 
+		s = 2
 	} else if opcode == 0b0010111 {
 		// AUIPC
 		rd = (inst >> 7) & 0x1f
 		imm = inst & 0xfffff000
 
 		r[rd] = imm + pc
-
 		pc = pc + 4
-		s = 2
 
+		s = 2
 	} else if opcode == 0b1101111 {
 		// JAL
+		rd = (inst >> 7) & 0x1f
 		imm = ((inst & 0x80000000) >> 11) | (inst & 0xff000) | ((inst >> 9) & 0x800) | ((inst >> 20) & 0x7fe)
-		if (imm & 0x100000) == 0x100000 {
+		if (imm >> 20) == 0x1 {
 			imm = imm | 0xffe00000
 		}
-		rd = (inst >> 7) & 0x1f
 
 		r[rd] = pc + 4
 		pc = pc + imm
+
 		s = 2
-
 	} else if opcode == 0b1100111 {
-
 		rd = (inst >> 7) & 0x1f
+		funct3 = (inst >> 12) & 0x7
 		rs1 = (inst >> 15) & 0x1f
 		imm = inst >> 20
-		if (imm & 0x800) == 0x800 {
+		if (imm >> 11) == 0x1 {
 			imm = imm | 0xfffff000
 		}
-		funct3 = (inst >> 12) & 0x7
 
 		if funct3 == 0b000 {
 			// JALR
 			r[rd] = pc + 4
 			pc = (imm + r[rs1]) & 0xfffffffe
-			s = 2
 
+			s = 2
 		}
 
 	} else if opcode == 0b1100011 {
-
 		imm = ((inst & 0x80000000) >> 19) | ((inst & 0x80) << 4) | ((inst >> 20) & 0x7e0) | ((inst >> 7) & 0x1e)
 		if (imm & 0x1000) == 0x1000 {
 			imm = imm | 0xffffe000
 		}
+		funct3 = (inst >> 12) & 0x7
 		rs1 = (inst >> 15) & 0x1f
 		rs2 = (inst >> 20) & 0x1f
-		funct3 = (inst >> 12) & 0x7
 
 		if funct3 == 0b000 {
 			// BEQ
@@ -117,8 +111,8 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			} else {
 				pc = pc + 4
 			}
-			s = 2
 
+			s = 2
 		} else if funct3 == 0b001 {
 			// BNE
 			if r[rs1] != r[rs2] {
@@ -126,56 +120,50 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			} else {
 				pc = pc + 4
 			}
-			s = 2
 
+			s = 2
 		} else if funct3 == 0b100 {
 			// BLT
 			if ((r[rs1] >> 31) == 0x0) && ((r[rs2] >> 31) == 0x0) {
-
 				if r[rs1] < r[rs2] {
 					pc = imm + pc
 				} else {
 					pc = pc + 4
 				}
-
 			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
-
 				if r[rs1] > r[rs2] {
 					pc = imm + pc
 				} else {
 					pc = pc + 4
 				}
-
 			} else if (r[rs1] >> 31) == 0x1 {
 				pc = imm + pc
 			} else {
 				pc = pc + 4
 			}
 
+			s = 2
 		} else if funct3 == 0b101 {
 			// BGE
 			if ((r[rs1] >> 31) == 0x0) && ((r[rs2] >> 31) == 0x0) {
-
 				if r[rs1] >= r[rs2] {
 					pc = imm + pc
 				} else {
 					pc = pc + 4
 				}
-
 			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
-
 				if r[rs1] <= r[rs2] {
 					pc = imm + pc
 				} else {
 					pc = pc + 4
 				}
-
 			} else if (r[rs2] >> 31) == 0x1 {
 				pc = imm + pc
 			} else {
 				pc = pc + 4
 			}
 
+			s = 2
 		} else if funct3 == 0b110 {
 			// BLTU
 			if r[rs1] < r[rs2] {
@@ -184,6 +172,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 				pc = pc + 4
 			}
 
+			s = 2
 		} else if funct3 == 0b111 {
 			// BGEU
 			if r[rs1] >= r[rs2] {
@@ -192,15 +181,14 @@ func ZVMTick(c ZVMContext) ZVMContext {
 				pc = pc + 4
 			}
 
+			s = 2
 		}
-
 	} else if opcode == 0b0000011 {
-
 		rd = (inst >> 7) & 0x1f
-		rs1 = (inst >> 15) & 0x1f
 		funct3 = (inst >> 12) & 0x7
+		rs1 = (inst >> 15) & 0x1f
 		imm = inst >> 20
-		if (imm & 0x800) == 0x800 {
+		if (imm >> 11) == 0x1 {
 			imm = imm | 0xfffff000
 		}
 
@@ -212,6 +200,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			}
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b001 {
 			// LH
 			r[rd] = uint32(m[r[rs1]+imm]) | (uint32(m[r[rs1]+imm+1]) << 8)
@@ -220,6 +209,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			}
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b010 {
 			// LW
 			r[rd] = uint32(m[r[rs1]+imm]) | (uint32(m[r[rs1]+imm+1]) << 8) | (uint32(m[r[rs1]+imm+2]) << 16) | (uint32(m[r[rs1]+imm+3]) << 24)
@@ -228,39 +218,42 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			}
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b100 {
 			// LBU
 			r[rd] = uint32(m[r[rs1]+imm])
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b101 {
 			// LHU
 			r[rd] = uint32(m[r[rs1]+imm]) | (uint32(m[r[rs1]+imm+1]) << 8)
 			pc = pc + 4
 
+			s = 2
 		}
-
 	} else if opcode == 0b0100011 {
-		rs1 = (inst >> 15) & 0x1f
-		rs2 = (inst >> 20) & 0x1f
-		funct3 = (inst >> 12) & 0x7
 		imm = ((inst >> 7) & 0x1f) | ((inst >> 20) & 0xfe0)
-
-		if (imm & 0x800) == 0x800 {
+		if (imm >> 11) == 0x1 {
 			imm = imm | 0xfffff000
 		}
+		funct3 = (inst >> 12) & 0x7
+		rs1 = (inst >> 15) & 0x1f
+		rs2 = (inst >> 20) & 0x1f
 
 		if funct3 == 0b000 {
 			// SB
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b001 {
 			// SH
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
 			m[r[rs1]+imm+1] = uint8((r[rs2] >> 8) & 0xff)
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b010 {
 			// SW
 			m[r[rs1]+imm] = uint8(r[rs2] & 0xff)
@@ -269,6 +262,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			m[r[rs1]+imm+3] = uint8((r[rs2] >> 24) & 0xff)
 			pc = pc + 4
 
+			s = 2
 		}
 
 	} else if opcode == 0b0010011 {
@@ -276,7 +270,6 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		funct3 = (inst >> 12) & 0x7
 		rs1 = (inst >> 15) & 0x1f
 		imm = inst >> 20
-
 		if (imm & 0x800) == 0x800 {
 			imm = imm | 0xfffff000
 		}
@@ -286,24 +279,21 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			r[rd] = r[rs1] + imm
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b010 {
 			// SLTI
 			if ((r[rs1] >> 31) == 0x0) && ((imm >> 31) == 0x0) {
-
 				if r[rs1] < imm {
 					r[rd] = 0x1
 				} else {
 					r[rd] = 0x0
 				}
-
 			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
-
 				if r[rs1] > imm {
 					r[rd] = 0x1
 				} else {
 					r[rd] = 0x0
 				}
-
 			} else if (r[rs1] >> 31) == 0x1 {
 				r[rd] = 0x1
 			} else {
@@ -311,6 +301,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			}
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b011 {
 			// SLTIU
 			if r[rs1] < imm {
@@ -320,39 +311,46 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			}
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b100 {
 			// XORI
 			r[rd] = r[rs1] ^ imm
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b110 {
 			// ORI
 			r[rd] = r[rs1] | imm
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b111 {
 			// ANDI
 			r[rd] = r[rs1] & imm
 			pc = pc + 4
 
+			s = 2
 		}
-
 	} else if opcode == 0b0010011 {
 		rd = (inst >> 7) & 0x1f
 		funct3 = (inst >> 12) & 0x7
 		rs1 = (inst >> 15) & 0x1f
-		imm = inst >> 20
 		shamt = inst & 0x1f
+		imm = inst >> 20
 
 		if (funct3 == 0b001) && ((imm & 0xfe0) == 0) {
 			// SLLI
 			r[rd] = r[rs1] << shamt
 			pc = pc + 4
+
+			s = 2
 		} else if funct3 == 0b101 {
 			if (imm & 0xfe0) == 0 {
 				// SRLI
 				r[rd] = r[rs1] >> shamt
 				pc = pc + 4
+
+				s = 2
 			} else if (imm & 0xfe0) == 0x400 {
 				// SRAI
 				r[rd] = r[rs1] >> shamt
@@ -360,45 +358,51 @@ func ZVMTick(c ZVMContext) ZVMContext {
 					r[rd] = r[rd] | (0xffffffff << (32 - shamt))
 				}
 				pc = pc + 4
+
+				s = 2
 			}
 		}
-
 	} else if opcode == 0b0110011 {
 		rd = (inst >> 7) & 0x1f
+		funct3 = (inst >> 12) & 0x7
 		rs1 = (inst >> 15) & 0x1f
 		rs2 = (inst >> 20) & 0x1f
-		funct3 = (inst >> 12) & 0x7
 		funct7 = inst >> 25
 
 		if funct3 == 0b000 {
-			if funct7 == 0 {
+			if funct7 == 0x0 {
 				// ADD
 				r[rd] = r[rs1] + r[rs2]
+				pc = pc + 4
+
+				s = 2
 			} else if funct7 == 0x20 {
 				// SUB
 				r[rd] = r[rs1] - r[rs2]
+				pc = pc + 4
+
+				s = 2
 			}
 		} else if funct3 == 0b001 {
 			// SLL
 			r[rd] = r[rs1] << (r[rs2] & 0x1f)
+			pc = pc + 4
+
+			s = 2
 		} else if funct3 == 0b010 {
 			// SLT
 			if ((r[rs1] >> 31) == 0x0) && ((imm >> 31) == 0x0) {
-
 				if r[rs1] < r[rs2] {
 					r[rd] = 0x1
 				} else {
 					r[rd] = 0x0
 				}
-
 			} else if ((r[rs1] >> 31) == 0x1) && ((r[rs2] >> 31) == 0x1) {
-
 				if r[rs1] > r[rs2] {
 					r[rd] = 0x1
 				} else {
 					r[rd] = 0x0
 				}
-
 			} else if (r[rs1] >> 31) == 0x1 {
 				r[rd] = 0x1
 			} else {
@@ -406,6 +410,7 @@ func ZVMTick(c ZVMContext) ZVMContext {
 			}
 			pc = pc + 4
 
+			s = 2
 		} else if funct3 == 0b011 {
 			// SLTU
 			if r[rs1] < imm {
@@ -414,13 +419,20 @@ func ZVMTick(c ZVMContext) ZVMContext {
 				r[rd] = 0x0
 			}
 			pc = pc + 4
+
+			s = 2
 		} else if funct3 == 0b100 {
 			// XOR
 			r[rd] = r[rs1] ^ r[rs2]
+
+			s = 2
 		} else if funct3 == 0b101 {
 			// SRL
 			if funct7 == 0x0 {
 				r[rd] = r[rs1] >> (r[rs2] & 0x1f)
+				pc = pc + 4
+
+				s = 2
 			} else if funct7 == 0x20 {
 				// SRA
 				r[rd] = r[rs1] >> (r[rs2] & 0x1f)
@@ -428,18 +440,25 @@ func ZVMTick(c ZVMContext) ZVMContext {
 					r[rd] = r[rd] | (0xffffffff << (32 - (r[rs2] & 0x1f)))
 				}
 				pc = pc + 4
+
+				s = 2
 			}
 		} else if funct3 == 0b110 {
 			// OR
 			r[rd] = r[rs1] | r[rs2]
+			pc = pc + 4
+
+			s = 2
 		} else if funct3 == 0b111 {
 			// AND
 			r[rd] = r[rs1] & r[rs2]
+			pc = pc + 4
+
+			s = 2
 		}
 	} else if opcode == 0b1110011 {
 		// ECALL
 		c = ZVMHandleECall(c)
-
 	}
 
 	c.pc = pc
