@@ -12,7 +12,7 @@ type ZVMContext struct {
 func ZVMReset(c ZVMContext) ZVMContext {
 	c.m = make([]uint8, 4294967296, 4294967296)
 	c.r = make([]uint32, 32, 32)
-	c.pc = 0x08000000
+	c.pc = 0x8000000
 	c.s = 0x2
 	return c
 }
@@ -260,7 +260,6 @@ func ZVMTick(c ZVMContext) ZVMContext {
 
 			s = 0x2
 		}
-
 	} else if opcode == 0b0010011 {
 		rd = (inst >> 7) & 0x1f
 		funct3 = (inst >> 12) & 0x7
@@ -461,8 +460,12 @@ func ZVMTick(c ZVMContext) ZVMContext {
 		funct12 = inst >> 20
 
 		if (rd == 0x0) && (funct3 == 0x0) && (rs1 == 0x0) && (funct12 == 0x0) {
-			s = 5
+			s = 0x5
 		}
+	}
+
+	if s == 0x4 {
+		s = 0x8
 	}
 
 	c.pc = pc
@@ -478,6 +481,10 @@ func ZVMRun(c ZVMContext) ZVMContext {
 		c = ZVMTick(c)
 	}
 	return c
+}
+
+func LoadExecFile(data []byte, m []uint8) {
+
 }
 
 func main() {
