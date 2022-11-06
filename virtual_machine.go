@@ -25,7 +25,7 @@ func ZVMReset(c ZVMContext, data []byte) ZVMContext {
 	ISLen = ISLen << 12
 	DSLen = DSLen << 12
 
-	if uint32(len(data)) != (ISLen + DSLen + uint32(64)) {
+	if (uint32(len(data)) != (ISLen + DSLen + uint32(64))) || (ISLen == 0) || (DSLen == 0) {
 		c.s = 0x1
 		return c
 	}
