@@ -14,7 +14,7 @@ func ZVMReset(c ZVMContext, data []byte) ZVMContext {
 	var DSLen uint32
 	var I uint32
 
-	if len(data) < int(64) || len(data) > int(0x4000000) {
+	if (len(data) < int(64)) || (len(data) > int(0x4000000)) {
 		c.s = 0x1
 		return c
 	}
