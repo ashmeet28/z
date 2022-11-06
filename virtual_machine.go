@@ -9,11 +9,41 @@ type ZVMContext struct {
 	s  uint32
 }
 
-func ZVMReset(c ZVMContext) ZVMContext {
+func ZVMReset(c ZVMContext, data []byte) ZVMContext {
+	var ISLen uint32
+	var DSLen uint32
+	var I uint32
+
+	if len(data) < int(64) || len(data) > int(0x4000000) {
+		c.s = 0x1
+		return c
+	}
+
+	ISLen = uint32(data[0]) | (uint32(data[1]) << 8) | (uint32(data[2]) << 16) | (uint32(data[3]) << 24)
+	DSLen = uint32(data[4]) | (uint32(data[5]) << 8) | (uint32(data[6]) << 16) | (uint32(data[7]) << 24)
+
+	ISLen = ISLen << 12
+	DSLen = DSLen << 12
+
+	if uint32(len(data)) != (ISLen + DSLen + uint32(64)) {
+		c.s = 0x1
+		return c
+	}
+
 	c.m = make([]uint8, 4294967296, 4294967296)
 	c.r = make([]uint32, 32, 32)
 	c.pc = 0x8000000
+
+	for I = 0; I < ISLen; I = I + 1 {
+		c.m[I+0x8000000] = data[I+4096]
+	}
+
+	for I = 0; I < DSLen; I = I + 1 {
+		c.m[I+0x80000000] = data[I+ISLen+4096]
+	}
+
 	c.s = 0x2
+
 	return c
 }
 
@@ -480,28 +510,15 @@ func ZVMRun(c ZVMContext) ZVMContext {
 	for c.s == 2 {
 		c = ZVMTick(c)
 	}
+
 	return c
-}
-
-func LoadExecFile(data []byte, m []uint8) {
-
 }
 
 func main() {
 	var c ZVMContext
-	c = ZVMReset(c)
+	data := make([]uint8, 1000000)
 
-	data := []uint32{0b1_00001_0110111, 0b1_00010_0010111}
-	var a uint32
-	a = c.pc
-
-	for _, v := range data {
-		c.m[a+0] = uint8((v >> 0) & 0xff)
-		c.m[a+1] = uint8((v >> 8) & 0xff)
-		c.m[a+2] = uint8((v >> 16) & 0xff)
-		c.m[a+3] = uint8((v >> 24) & 0xff)
-		a += 4
-	}
+	c = ZVMReset(c, data)
 
 	c = ZVMRun(c)
 
