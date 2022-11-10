@@ -30,7 +30,7 @@ func ZVMReset(c ZVMContext, data []byte) ZVMContext {
 		return c
 	}
 
-	c.m = make([]uint8, 4294967296, 4294967296)
+	c.m = make([]uint8, 0x100000000, 0x100000000)
 	c.r = make([]uint32, 32, 32)
 	c.pc = 0x8000000
 
