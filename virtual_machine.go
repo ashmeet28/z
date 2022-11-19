@@ -10,9 +10,18 @@ type ZVMContext struct {
 }
 
 func ZVMReset(c ZVMContext, data []byte) ZVMContext {
+	if len(data) < 0x8000000 {
+		c.s = 0x1
+		return c
+	}
+
 	c.m = make([]uint8, 0x100000000, 0x100000000)
 	c.r = make([]uint32, 32, 32)
 	c.pc = 0x8000000
+
+	for i := range data {
+		c.m[i+0x8000000] = uint8(data[i])
+	}
 
 	c.s = 0x2
 
