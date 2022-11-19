@@ -1,26 +1,54 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strings"
+)
 
-func ASMGetLines(data []uint8) [][]uint8 {
-	var Lines [][]uint8
-	var LineLength int
-	var LastIndex int
-	LastIndex = 0
-	for i := range data {
-		if data[i] == 0x0a {
-			if LineLength != 0 {
-				Lines = append(Lines, data[LastIndex:(LastIndex+LineLength)])
-			}
-			LastIndex = i + 1
-			LineLength = 0
-		} else {
-			LineLength++
+type ZCContext struct {
+	pc     uint32
+	labels map[string]uint32
+	lines  []string
+}
+
+func ZCReset(c ZCContext) ZCContext {
+	c.pc = 0x8000000
+	c.labels = make(map[string]uint32)
+	c.lines = make([]string, 0, 0)
+	return c
+}
+
+func ZCGetLines(c ZCContext, s string) ZCContext {
+	for _, v := range strings.Split(s, "\x0a") {
+		if v != "" && v[0:1] != "#" {
+			c.lines = append(c.lines, v)
 		}
 	}
-	return Lines
+	return c
 }
+
+func ZCGetLabels(c ZCContext) ZCContext {
+	var words []string
+	var pc uint32
+
+	pc = c.pc
+	for _, v := range c.lines {
+		words = strings.Split(v, " ")
+		if words[0] == "label" {
+			c.labels[words[1]] = pc
+		} else {
+			pc = pc + 4
+		}
+	}
+	return c
+}
+
 func main() {
-	d := []uint8{0x0a, 0x0a, 2, 5, 7, 9, 0x0a, 0x0a, 12, 55, 0x0a, 0x0a}
-	fmt.Println(ASMGetLines(d))
+	var c ZCContext
+	c = ZCReset(c)
+	d, _ := os.ReadFile("/home/xenon/a")
+	c = ZCGetLines(c, string(d))
+	c = ZCGetLabels(c)
+	fmt.Println(c)
 }
