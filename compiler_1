@@ -1,9 +1,51 @@
 u8 c
-u16 b
-u32 a abc
 
-i8 z
-i16 y
-i32 x
+# temporary values
+u32 t1 t2
 
+# arguments (not saved)
+u32 a1 a2
+
+# saved values
+u32 s1
+
+u32 return_value
+
+u32 heap_pointer
+u32 stack_pointer
+
+
+start:
+stack_pointer = 0x81_ff_ff_ff
+heap_pointer = 0x81_00_00_00
+
+stack_push:
+*stack_pointer = s1
+t1 = 0x4
+stack_pointer = stack_pointer + t1
+return
+
+stack_pop:
+s1 = *stack_pointer
+t1 = 0x4
+stack_pointer = stack_pointer - t1
+return
+
+heap_allocate:
+return_value = heap_pointer
+heap_pointer = heap_pointer + a1
+
+t1 = 0x3
+t2 = heap_pointer & t1
+
+if t2 != 0x0
+
+t1 = 0x4
+heap_pointer = heap_pointer + t1
+t2 = 0xff_ff_ff_fc
+heap_pointer = heap_pointer & t2
+
+endif
+
+return
 
