@@ -1,0 +1,30 @@
+u32 a
+i32 b
+u32
+
+l:
+
+[a] = b
+a = [b]
+a = b + c
+a = b - c
+a = b | c
+a = b & c
+a = b ^ c
+a = b << c
+a = b >> c
+
+0:
+1:
+
+
+if a == b goto 0b
+if a != b goto 3f
+if a < b goto l
+if a > b goto l
+if a <= b goto l
+if a >= b goto l
+
+
+2:
+3:
