@@ -3,9 +3,6 @@ u8 c
 # Temporary values
 u32 t_a t_b t_c
 
-# Arguments (not saved)
-u32 a_a a_b
-
 # Saved values
 u32 s_a s_b
 
@@ -38,7 +35,7 @@ stack_pop:
 # (Size)
 heap_allocate:
   return_value = heap_pointer
-  heap_pointer = heap_pointer + a_a
+  heap_pointer = heap_pointer + s_a
 
   # Align heap pointer
   t_a = 0x3
