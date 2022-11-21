@@ -1,7 +1,7 @@
 u8 c
 
 # Temporary values
-u32 t1 t2
+u32 t1 t2 t3
 
 # Arguments (not saved)
 u32 a1 a2
@@ -16,42 +16,40 @@ u32 stack_pointer
 
 
 start:
- stack_pointer = 0x81_ff_ff_ff
- heap_pointer = 0x81_00_00_00
+  stack_pointer = 0x81_ff_ff_ff
+  heap_pointer = 0x81_00_00_00
 
 stack_push:
- t1 = 0x4
- *stack_pointer = s1
- stack_pointer = stack_pointer - t1
- *stack_pointer = s2
- stack_pointer = stack_pointer - t1
- return
+  t1 = 0x4
+  *stack_pointer = s1
+  stack_pointer = stack_pointer - t1
+  *stack_pointer = s2
+  stack_pointer = stack_pointer - t1
+  return
 
 stack_pop:
- t1 = 0x4
- s2 = *stack_pointer
- stack_pointer = stack_pointer + t1
- s1 = *stack_pointer
- stack_pointer = stack_pointer + t1
- return
+  t1 = 0x4
+  s2 = *stack_pointer
+  stack_pointer = stack_pointer + t1
+  s1 = *stack_pointer
+  stack_pointer = stack_pointer + t1
+  return
 
 # (Size)
 heap_allocate:
- return_value = heap_pointer
- heap_pointer = heap_pointer + a1
+  return_value = heap_pointer
+  heap_pointer = heap_pointer + a1
 
- # Align heap pointer
- t1 = 0x3
- t2 = heap_pointer & t1
+  # Align heap pointer
+  t1 = 0x3
+  t2 = heap_pointer & t1
+  t3 = 0x0
+  if t2 != t3
+    t1 = 0x4
+    heap_pointer = heap_pointer + t1
+    t2 = 0xff_ff_ff_fc
+    heap_pointer = heap_pointer & t2
+  endif
 
- if t2 != 0x0
-
- t1 = 0x4
- heap_pointer = heap_pointer + t1
- t2 = 0xff_ff_ff_fc
- heap_pointer = heap_pointer & t2
-
- endif
-
- return
+  return
 
