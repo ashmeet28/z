@@ -42,13 +42,13 @@ heap_allocate:
 
   # Align heap pointer
   t1 = 0x3
-  t2 = heap_pointer & t1
-  t3 = 0x0
-  if t2 != t3
+  t1 = heap_pointer & t1
+  t2 = 0x0
+  if t1 != t2
     t1 = 0x4
     heap_pointer = heap_pointer + t1
-    t2 = 0xff_ff_ff_fc
-    heap_pointer = heap_pointer & t2
+    t1 = 0xff_ff_ff_fc
+    heap_pointer = heap_pointer & t1
   endif
 
   return
