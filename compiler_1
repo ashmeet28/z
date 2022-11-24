@@ -13,40 +13,40 @@ u32 stack_pointer
 
 
 start:
-  stack_pointer = 0x81_ff_ff_ff
-  heap_pointer = 0x81_00_00_00
+    stack_pointer = 0x81_ff_ff_ff
+    heap_pointer = 0x81_00_00_00
 
 stack_push:
-  t_a = 0x4
-  *stack_pointer = s_a
-  stack_pointer = stack_pointer - t_a
-  *stack_pointer = s_b
-  stack_pointer = stack_pointer - t_a
-  return
+    t_a = 0x4
+    *stack_pointer = s_a
+    stack_pointer = stack_pointer - t_a
+    *stack_pointer = s_b
+    stack_pointer = stack_pointer - t_a
+    return
 
 stack_pop:
-  t_a = 0x4
-  s_b = *stack_pointer
-  stack_pointer = stack_pointer + t_a
-  s_a = *stack_pointer
-  stack_pointer = stack_pointer + t_a
-  return
+    t_a = 0x4
+    s_b = *stack_pointer
+    stack_pointer = stack_pointer + t_a
+    s_a = *stack_pointer
+    stack_pointer = stack_pointer + t_a
+    return
 
 # (Size)
 heap_allocate:
-  return_value = heap_pointer
-  heap_pointer = heap_pointer + s_a
+    return_value = heap_pointer
+    heap_pointer = heap_pointer + s_a
 
-  # Align heap pointer
-  t_a = 0x3
-  t_a = heap_pointer & t_a
-  t_b = 0x0
-  if t_a != t_b
-    t_a = 0x4
-    heap_pointer = heap_pointer + t_a
-    t_a = 0xff_ff_ff_fc
-    heap_pointer = heap_pointer & t_a
-  endif
+    # Align heap pointer
+    t_a = 0x3
+    t_a = heap_pointer & t_a
+    t_b = 0x0
+    if t_a != t_b
+      t_a = 0x4
+      heap_pointer = heap_pointer + t_a
+      t_a = 0xff_ff_ff_fc
+      heap_pointer = heap_pointer & t_a
+    endif
 
-  return
+    return
 
