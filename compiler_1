@@ -1,5 +1,7 @@
 u8 c
 
+u32 l 
+
 # Temporary values
 u32 t_a t_b t_c
 
@@ -8,44 +10,61 @@ u32 s_a s_b
 
 u32 return_value
 
-u32 heap_pointer
-u32 stack_pointer
+# Main heap pointer
+u32 p_heap
 
+# Main stack pointer
+u32 p_stack
+
+u32 p_source_code
+u32 source_code_length
 
 start:
-    stack_pointer = 0x81_ff_ff_ff
-    heap_pointer = 0x81_00_00_00
+    p_stack = 0x81_ff_ff_ff
+    p_heap = 0x81_00_00_00
+    p_source_code = 0x82_ff_ff_ff
 
+    # Copy source code to heap
+    l = 0x0
+    t_a = l + p_source_code
+    c = *t_a
+    while c != 0x0
+        t_b = 0x1
+        l = l + t_b
+        t_a = l + p_source_code
+        c = *t_a
+    endwhile
+    
 stack_push:
     t_a = 0x4
-    *stack_pointer = s_a
-    stack_pointer = stack_pointer - t_a
-    *stack_pointer = s_b
-    stack_pointer = stack_pointer - t_a
+    *p_stack = s_a
+    p_stack = p_stack - t_a
+    *p_stack = s_b
+    p_stack = p_stack - t_a
     return
 
 stack_pop:
     t_a = 0x4
-    s_b = *stack_pointer
-    stack_pointer = stack_pointer + t_a
-    s_a = *stack_pointer
-    stack_pointer = stack_pointer + t_a
+    s_b = *p_stack
+    p_stack = p_stack + t_a
+    s_a = *p_stack
+    p_stack = p_stack + t_a
     return
 
 # (Size)
 heap_allocate:
-    return_value = heap_pointer
-    heap_pointer = heap_pointer + s_a
+    return_value = p_heap
+    p_heap = p_heap + s_a
 
     # Align heap pointer
     t_a = 0x3
-    t_a = heap_pointer & t_a
+    t_a = p_heap & t_a
     t_b = 0x0
     if t_a != t_b
-      t_a = 0x4
-      heap_pointer = heap_pointer + t_a
-      t_a = 0xff_ff_ff_fc
-      heap_pointer = heap_pointer & t_a
+        t_a = 0x4
+        p_heap = p_heap + t_a
+        t_a = 0xff_ff_ff_fc
+        p_heap = p_heap & t_a
     endif
 
     return
