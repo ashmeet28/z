@@ -33,7 +33,7 @@ start:
 
     # Move source to heap
     s_a = p_source
-    goto get_string_length
+    goto string_get_length
     source_length = return_value
 
     s_a = source_length
@@ -43,11 +43,10 @@ start:
     s_c = source_length
     goto copy_bytes
     p_source = s_a
-    ecall
 
 # (string_pointer)
-get_string_length:
-    stack_push
+string_get_length:
+    goto stack_push
 
         return_value = 0x0
         c = *s_a
@@ -57,13 +56,13 @@ get_string_length:
             return_value = return_value + ul_1
         endwhile
 
-    stack_pop
+    goto stack_pop
 
     return
 
 # (destination, source, size)    
 copy_bytes:
-    stack_push
+    goto stack_push
 
     while s_c != ul_0
         c = *s_b
@@ -73,7 +72,7 @@ copy_bytes:
         s_c = s_c - ul_1
     endwhile
 
-    stack_pop
+    goto stack_pop
 
     return
 
