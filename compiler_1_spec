@@ -1,5 +1,6 @@
 Keywords:
 
+var
 u8 u16 u32
 i8 i16 i32
 

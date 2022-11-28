@@ -1,25 +1,25 @@
-u8 c
+var c u8
 
-u32 ul_0 ul_1 ul_3 ul_4
+var ul_0 ul_1 ul_3 ul_4 u32
 
-u32 l p_c
+var l p_c u32
 
 # Temporary values
-u32 t_a t_b t_c
+var t_a t_b t_c u32
 
 # Saved values
-u32 s_a s_b
+var s_a s_b u32
 
-u32 return_value
+var return_value u32
 
 # Main heap pointer
-u32 p_heap
+var p_heap u32
 
 # Main stack pointer
-u32 p_stack
+var p_stack u32
 
-u32 p_source
-u32 source_length
+var p_source u32
+var source_length u32
 
 start:
     ul_0 = 0x0
