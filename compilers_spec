@@ -1,4 +1,0 @@
-0x80_00_00_00 to 0x80_ff_ff_ff Memory managed by compiler
-0x81_00_00_00 to 0x81_ff_ff_ff Memory managed by program
-0x82_00_00_00 to 0x82_ff_ff_ff Source code
-0x83_00_00_00 to 0x83_ff_ff_ff Complied instructions
